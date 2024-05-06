@@ -96,6 +96,12 @@ else
 
     echo " Do you want to generate a test certificate?"
     read -p "   > Test Validation (0 for no, 1 for yes): " TEST_CERTIFICATE
+
+    echo " Enter the AWS Access Key for AWS user account."
+    read -p "   > AWS key: " AWS_KEY
+
+        echo " Enter the AWS Access Secret for AWS user account."
+    read -p "   > AWS secret: " AWS_SECRET
 fi
 
 # DO NOT EDIT - FileMaker Directories

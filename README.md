@@ -9,6 +9,9 @@ The original scripts use the LE http challenge, which can be tricky from a secur
 
 The scripts included here use the LE dns challenge which do not require access to the FileMaker Server at all.
 See blog post <...> for more details.
+This example uses Route53 as the DNS provider and the Certbot agent has support for many more:
+https://community.letsencrypt.org/t/dns-providers-who-easily-integrate-with-lets-encrypt-dns-validation/86438
+Just to name a few: cloudflare, google, ovh, digitalocean, linode, dnsimple, dnsmadeeasy, gehirn, luadns, nsone, rfc2136, sakuracloud...
 
 This setup is for Claris FileMaker Server running on Ubuntu.
 
@@ -23,6 +26,8 @@ Ideally you'll create an AWS IAM user with a strict policy to only be able to cr
 - line 21 by adding your hosted zone id
 - line 26 by adding  your domain name
 
+sudo -E (preserve environment)
+
 ## To Do
 -----------------------------
 Just like the Claris example, allow for prompting for the AWS credentials.
@@ -35,4 +40,5 @@ Just like the Claris example, allow for prompting for the AWS credentials.
     - Temporarily stop the ufw service to allow incoming connections into port 80 for validation
     - Permit r/w access to the fmserver:fmsadmin usergroup so that generated certificates imported by FileMaker Server.
     - Generate logs in /CStore/Certbot
+- use "sudo -E" to run the script, the "-E" is necessary to preserve the enviromnt if you you stored the required credentials in the environment
 - A FileMaker Server restart is still needed to apply the certificate.

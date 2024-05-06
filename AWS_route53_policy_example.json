@@ -21,9 +21,9 @@
         "arn:aws:route53:::hostedzone/<your hosted zone id>"
       ],
       "Condition": {
-        "ForAllValues:StringEquals": {
+        "ForAllValues:StringLike": {
           "route53:ChangeResourceRecordSetsNormalizedRecordNames": [
-            "_acme-challenge.<your domain (example.com)>"
+            "_acme-challenge.*<your domain (example.com)>"
           ],
           "route53:ChangeResourceRecordSetsRecordTypes": [
             "TXT"
