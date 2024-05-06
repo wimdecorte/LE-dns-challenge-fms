@@ -126,11 +126,6 @@ fi
 # capture return code for running certbot command
 RETVAL=$?
 
-# Ubuntu ONLY: Restart ufw firewall
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    service ufw start
-fi
-
 echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 
 if [[ $RETVAL != 0 ]] ; then
