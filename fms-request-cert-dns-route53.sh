@@ -15,7 +15,7 @@ export $(grep -v '^#' .env | xargs)
 # Server is running prior to running this script.
 
 # Usage:
-# sudo -E ./fm_request_cert.sh
+# sudo -E ./fms-request-cert-dns-route53.sh
 
 # Detects if FileMaker Server is still running
 isServerRunning()
@@ -81,6 +81,7 @@ else
     # Prompt user for values
     echo " Enter email for Let's Encrypt Notifications."
     read -p "   > Email: " EMAIL
+
     echo " Enter the domain for Certificate Generation. Note: Wildcards are not supported."
     read -p "   > Domain: " DOMAIN
 
@@ -156,23 +157,11 @@ else
     echo "Generating certificate request." 
 fi
 
-# Ubuntu ONLY: Allow incoming connections into ufw
-# Do not add unnecessary lines from here to the restarting ufw. 
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    service ufw stop
-fi
-
 # Run the certbot certificate generation command
-# certbot certonly --webroot $TEST_CERT_PARAM -w "$WEBROOTPATH" --preferred-challenges http $DOMAINLIST--agree-tos --non-interactive -m $EMAIL --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"$EXPAND_PARAM
 certbot certonly --dns-route53 $TEST_CERT_PARAM $DOMAINLIST --agree-tos --non-interactive -m $EMAIL --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" $EXPAND_PARAM
 
 # Capture return code for running certbot command
 RETVAL=$?
-
-# Ubuntu ONLY: Restart ufw firewall
-if [[ "$OSTYPE" == "linux-gnu"* ]] ; then
-    service ufw start
-fi
 
 if [ $RETVAL != 0 ] ; then
     err "[ERROR]: Certbot returned with a nonzero failure code. Check $CERTBOTPATH/letsencrypt.log for more information."

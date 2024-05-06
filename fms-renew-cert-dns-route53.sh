@@ -2,6 +2,14 @@
 set -u
 set -o pipefail
 
+
+# setup
+# -----------------------------------------------------
+# these are read from the .env file in the same folder
+export $(grep -v '^#' .env | xargs)
+# -----------------------------------------------------
+
+
 # This script runs the certbot renewal and imports the certificate into FileMaker Server. If the Certbot command is selected to
 # be ran, root will be required.
 
@@ -39,18 +47,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 fi
 
-# Restart Server After Importing
-PROMPT=1                                    # Set to 1 to get user prompts for script variables.
-RESTART_SERVER=1                            # [WARNING]: If set to 1, will automatically restart server, without warning.
-MAX_WAIT_AMOUNT=6                           # Used to determine max wait time for server to stop: time =  MAX_WAIT_AMOUNT * 10 seconds
-
-# Certbot Parameters
-DOMAIN="sample_domain.com"                  # Domain used to generate the certificate
-FORCE_RENEW=0                               # Set to 1, this will force renewal of a certificate even if it is not needed. It is
-                                            # recommended to keep this set at 0.
-
-TEST_CERTIFICATE=0                          # Set to 1, this will not use up a request and can be used as a dry-run to test. If 
-                                            # Set to 0, the command will be run and will use up a certificate request.
 
 if [ $PROMPT == 0 ] ; then
     # FileMaker Admin Console Login Information
@@ -87,6 +83,12 @@ else
     echo " Do you want to generate a test certificate?"
     read -p "   > Test Validation (0 for no, 1 for yes): " TEST_CERTIFICATE
 
+    echo " Enter the AWS Access Key for AWS user account."
+    read -p "   > AWS key: " AWS_KEY
+
+        echo " Enter the AWS Access Secret for AWS user account."
+    read -p "   > AWS secret: " AWS_SECRET
+
     if [[ $TEST_CERTIFICATE -eq 0 ]] ; then
         echo " Do you want to force renew the certificate?"
         read -p "   > Force Renew (0 for no, 1 for yes): " FORCE_RENEW
@@ -96,23 +98,11 @@ fi
 # DO NOT EDIT - FileMaker Directories
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     CERTBOTPATH="/opt/FileMaker/FileMaker Server/CStore/Certbot"
-    # detect if use is using Apache
-    if [[ -e "/opt/FileMaker/FileMaker\ Server/NginxServer/UseHttpd" ]] ; then
-        WEBROOTPATH="/opt/FileMaker/FileMaker Server/HTTPServer/htdocs/"
-    else
-        # default path for NGINX
-        WEBROOTPATH="/opt/FileMaker/FileMaker Server/NginxServer/htdocs/httpsRoot/"
-    fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     CERTBOTPATH="/Library/FileMaker Server/CStore/Certbot"
-    WEBROOTPATH="/Library/FileMaker Server/HTTPServer/htdocs/"
 fi
 
 # Set up paths for necessary directories
-if [[ ! -e "$WEBROOTPATH" ]] ; then
-    echo "[WARNING]: $WEBROOTPATH not found. Creating necessary directories." 
-    mkdir -p "$WEBROOTPATH"
-fi
 if [[ ! -e "$CERTBOTPATH" ]] ; then
     err "[WARNING] $CERTBOTPATH not found. Certificate likely does not exist." 
     exit 1
@@ -120,21 +110,16 @@ fi
 
 echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 
-# Ubuntu ONLY: Allow incoming connections into ufw
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    service ufw stop
-fi
-
 # run the certbot command
 if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
     echo "Generating test certificate request." 
-    certbot renew --dry-run --cert-name $DOMAIN -w "$WEBROOTPATH" --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
+    certbot renew --dns-route53 --dry-run --cert-name $DOMAIN  --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
 else
     echo "Generating certificate request." 
     if [[ $FORCE_RENEW -eq 1 ]] ; then
-        certbot renew --cert-name $DOMAIN --force-renew --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
+        certbot renew --dns-route53 --cert-name $DOMAIN --force-renew --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
     else
-        certbot renew --cert-name $DOMAIN --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
+        certbot renew --dns-route53 --cert-name $DOMAIN --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
     fi
 fi
 
