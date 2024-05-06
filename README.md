@@ -26,7 +26,6 @@ Ideally you'll create an AWS IAM user with a strict policy to only be able to cr
 - line 21 by adding your hosted zone id
 - line 26 by adding  your domain name
 
-sudo -E (preserve environment)
 
 ## To Do
 -----------------------------
@@ -40,5 +39,5 @@ Just like the Claris example, allow for prompting for the AWS credentials.
     - Temporarily stop the ufw service to allow incoming connections into port 80 for validation
     - Permit r/w access to the fmserver:fmsadmin usergroup so that generated certificates imported by FileMaker Server.
     - Generate logs in /CStore/Certbot
-- use "sudo -E" to run the script, the "-E" is necessary to preserve the enviromnt if you you stored the required credentials in the environment
+- use "sudo -E" to run the script, the "-E" is necessary to preserve the environment if you you stored the required credentials in the environment, otherwise sudo will not have access to your environment
 - A FileMaker Server restart is still needed to apply the certificate.
