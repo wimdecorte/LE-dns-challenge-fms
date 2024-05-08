@@ -190,8 +190,8 @@ if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
     exit 1
 fi
 
-PRIVKEYPATH=$(realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/privkey.pem")
-CERTFILEPATH=$(realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/fullchain.pem")
+PRIVKEYPATH=$(sudo -E realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/privkey.pem")
+CERTFILEPATH=$(sudo -E realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/fullchain.pem")
 
 # grant fmserver:fmsadmin group ownership
 if [ -e "$CERTBOTPATH" ] ; then
