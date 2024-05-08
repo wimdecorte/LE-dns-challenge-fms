@@ -17,29 +17,28 @@ This setup is for Claris FileMaker Server running on Ubuntu.
 
 ## Setup
 ---------------------------
-Add a .env-setup file based on the example, you'll need to specify AWS credentials and the credentials for your FileMaker Server Admin Console.
-Run the initial_setup.sh script and when done you can delete the .env-setup file
-
-Add a .env file based on the example.  This holds your configuration options
+Add a file named 01-fms-certbot.conf based on the example, you'll need to specify AWS credentials and the credentials for your FileMaker Server Admin Console, and set the options for the script
+Run the initial_setup.sh script to install certbot and the dns plugin.
 
 Ideally you'll create an AWS IAM user with a strict policy to only be able to create the required TXT DNS record and not allowed to modify any other DNS records.  A sample policy is included.  In that policy change:
 - line 21 by adding your hosted zone id
 - line 26 by adding  your domain name
 
+The scripts will use sudo where appropriate.  For the renewal script, if you want to schedule that as a FileMaker Server script with the default fmserver account, you will have to set the NOPASSWD option in the sudoers file (see the blog post for more details).
 
 ## To Do
 -----------------------------
-Just like the Claris example, allow for prompting for the AWS credentials.
+
+Email me your suggestions or add them as an issue on this repo.
 
 
 ## To note
 ------------------------------
-- Root is required to run the request script. This is because Certbot creates temporary directories and sets the isssued certificate and private keys' read/write permissions to root only. 
+- Root is required throughout the request scripts. This is because Certbot creates temporary directories and sets the isssued certificate and private keys' read/write permissions to root only. 
   The script uses root for the following:
     - Temporarily stop the ufw service to allow incoming connections into port 80 for validation
     - Permit r/w access to the fmserver:fmsadmin usergroup so that generated certificates imported by FileMaker Server.
     - Generate logs in /CStore/Certbot
-- use "sudo -E" to run the script, the "-E" is necessary to preserve the environment if you you stored the required credentials in the environment, otherwise sudo will not have access to your environment
 - A FileMaker Server restart is still needed to apply the certificate.
 
 
