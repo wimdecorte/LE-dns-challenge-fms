@@ -132,7 +132,7 @@ fi
 # Set up paths for necessary directories
 if [[ ! -e "$CERTBOTPATH" ]] ; then
     echo "[WARNING]: $CERTBOTPATH not found. Creating necessary directories." 
-    mkdir -p "$CERTBOTPATH"
+    sudo -E mkdir -p "$CERTBOTPATH"
 fi
 
 echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
