@@ -41,3 +41,6 @@ Just like the Claris example, allow for prompting for the AWS credentials.
     - Generate logs in /CStore/Certbot
 - use "sudo -E" to run the script, the "-E" is necessary to preserve the environment if you you stored the required credentials in the environment, otherwise sudo will not have access to your environment
 - A FileMaker Server restart is still needed to apply the certificate.
+
+
+tail -n 30 /opt/FileMaker/FileMaker\ Server/CStore/Certbot/letsencrypt.log

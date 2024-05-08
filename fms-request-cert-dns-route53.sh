@@ -4,18 +4,35 @@ set -o pipefail
 
 # setup
 # -----------------------------------------------------
-# these are read from the .env file in the same folder
-export $(grep -v '^#' .env | xargs)
+# load the variables from the conf file
+# assumes that the conf file is in the same folder as this script
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+cd "$parent_path"
+filePath="01-fms-certbot.conf"
+
+if [ ! -f "$filePath" ]; then
+    echo "missing ${filePath}"
+    exit 1
+fi
+
+while read -r LINE; do
+    # Remove leading and trailing whitespaces, and carriage return
+    CLEANED_LINE=$(echo "$LINE" | awk '{$1=$1};1' | tr -d '\r')
+
+    if [[ $CLEANED_LINE != '#'* ]] && [[ $CLEANED_LINE == *'='* ]]; then
+        export "$CLEANED_LINE"
+    fi
+done < "$filePath"
 # -----------------------------------------------------
 
 
 
-# This script runs the certbot generation and imports the certificate into FileMaker Server. This script is required to be ran
-# as root for initial validation and to permit access to FileMaker Server for certificate import. Please ensure that FileMaker
-# Server is running prior to running this script.
+# This script runs the certbot generation and imports the certificate into FileMaker Server.
+# Please ensure that FileMaker Server is running prior to running this script.
 
 # Usage:
-# sudo -E ./fms-request-cert-dns-route53.sh
+# ./fms-request-cert-dns-route53.sh
+# the relevant commands that need to run as sudo have the -E flag to preserve the environment variables
 
 # Detects if FileMaker Server is still running
 isServerRunning()
@@ -158,7 +175,7 @@ else
 fi
 
 # Run the certbot certificate generation command
-certbot certonly --dns-route53 $TEST_CERT_PARAM $DOMAINLIST --agree-tos --non-interactive -m $EMAIL --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" $EXPAND_PARAM
+sudo -E certbot certonly --dns-route53 $TEST_CERT_PARAM $DOMAINLIST --agree-tos --non-interactive -m $EMAIL --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" $EXPAND_PARAM
 
 # Capture return code for running certbot command
 RETVAL=$?
@@ -178,21 +195,21 @@ CERTFILEPATH=$(realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/fullchain.pem")
 
 # grant fmserver:fmsadmin group ownership
 if [ -e "$CERTBOTPATH" ] ; then
-    chown -R fmserver:fmsadmin "$CERTBOTPATH"
+    sudo -E chown -R fmserver:fmsadmin "$CERTBOTPATH"
 else
     err "[ERROR]: FileMaker Certbot folder was not found. Exiting..."
     exit 1
 fi
 
 if [ -f "$PRIVKEYPATH" ] ; then
-    chown -R fmserver:fmsadmin "$PRIVKEYPATH"
+    sudo -E chown -R fmserver:fmsadmin "$PRIVKEYPATH"
 else
     err "[ERROR]: An error occurred with certificate generation. No private key found."
     exit 1
 fi
 
 if [ -f "$CERTFILEPATH" ] ; then
-    chown -R fmserver:fmsadmin "$CERTFILEPATH"
+    sudo -E chown -R fmserver:fmsadmin "$CERTFILEPATH"
 else
     err "[ERROR]: An error occurred with certificate generation. No certificate found."
     exit 1
@@ -205,7 +222,7 @@ echo "Importing Certificates:"
 echo "Certificate: $CERTFILEPATH"
 echo "Private key: $PRIVKEYPATH"
 
-fmsadmin certificate import "$CERTFILEPATH" --keyfile "$PRIVKEYPATH" -y -u $FAC_USER -p $FAC_PASS
+sudo -E fmsadmin certificate import "$CERTFILEPATH" --keyfile "$PRIVKEYPATH" -y -u $FAC_USER -p $FAC_PASS
 
 # Capture return code for running certbot command
 RETVAL=$?
@@ -222,9 +239,9 @@ if [[ $RESTART_SERVER == 1 ]] ; then
     serverIsRunning=$?
     if [ $serverIsRunning -eq 1 ] ; then
         if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            service fmshelper stop
+            sudo service fmshelper stop
         elif [[ "$OSTYPE" == "darwin"* ]]; then
-            launchctl stop com.filemaker.fms
+            sudo launchctl stop com.filemaker.fms
         fi
     fi
 
@@ -240,9 +257,9 @@ if [[ $RESTART_SERVER == 1 ]] ; then
     done
 
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        service fmshelper start
+        sudo service fmshelper start
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        launchctl start com.filemaker.fms
+        sudo launchctl start com.filemaker.fms
     fi
 fi
 
@@ -253,3 +270,5 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 echo "Lets Encrypt certificate request script completed without any errors."
+
+exit 0

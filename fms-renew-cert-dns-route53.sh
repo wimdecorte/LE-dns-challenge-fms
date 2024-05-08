@@ -1,20 +1,40 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+# exit when a variable isn't set
 set -u
+# prevents errors in a pipeline from being masked.
 set -o pipefail
 
 
 # setup
 # -----------------------------------------------------
-# these are read from the .env file in the same folder
-export $(grep -v '^#' .env | xargs)
+# load the variables from the conf file
+# assumes that the conf file is in the same folder as this script
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+cd "$parent_path"
+filePath="01-fms-certbot.conf"
+
+if [ ! -f "$filePath" ]; then
+    echo "missing ${filePath}"
+    exit 1
+fi
+
+while read -r LINE; do
+    # Remove leading and trailing whitespaces, and carriage return
+    CLEANED_LINE=$(echo "$LINE" | awk '{$1=$1};1' | tr -d '\r')
+
+    if [[ $CLEANED_LINE != '#'* ]] && [[ $CLEANED_LINE == *'='* ]]; then
+        export "$CLEANED_LINE"
+    fi
+done < "$filePath"
 # -----------------------------------------------------
 
 
-# This script runs the certbot renewal and imports the certificate into FileMaker Server. If the Certbot command is selected to
-# be ran, root will be required.
+# This script runs the certbot renewal and imports the certificate into FileMaker Server.
 
 # Usage:
-# sudo -E ./fms-renew-cert-dns-route53.sh
+# ./fms-renew-cert-dns-route53.sh
+# the relevant commands that need to run as sudo have the -E flag to preserve the environment variables
 
 # Detects if FileMaker Server is still running
 isServerRunning()
@@ -73,7 +93,7 @@ else
     echo " To import the certificates and restart FileMaker Server, enter the FileMaker Admin Console credentials:"
     read -s -p "   > Username: " FAC_USER
     echo ""
-    
+
     read -s -p "   > Password: " FAC_PASS
     echo ""
 
@@ -113,13 +133,13 @@ echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # run the certbot command
 if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
     echo "Generating test certificate request." 
-    certbot renew --dns-route53 --dry-run --cert-name $DOMAIN  --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
+    sudo -E certbot renew --dns-route53 --dry-run --cert-name $DOMAIN  --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
 else
     echo "Generating certificate request." 
     if [[ $FORCE_RENEW -eq 1 ]] ; then
-        certbot renew --dns-route53 --cert-name $DOMAIN --force-renew --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
+        sudo -E certbot renew --dns-route53 --cert-name $DOMAIN --force-renew --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
     else
-        certbot renew --dns-route53 --cert-name $DOMAIN --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
+        sudo -E certbot renew --dns-route53 --cert-name $DOMAIN --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
     fi
 fi
 
@@ -135,7 +155,7 @@ fi
 
 # if we are testing, we don't need to import/restart
 if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
-    exit 1
+    exit 0
 fi
 
 CERTFILEPATH=$(realpath "$CERTBOTPATH/live/$DOMAIN/fullchain.pem")
@@ -143,14 +163,14 @@ PRIVKEYPATH=$(realpath "$CERTBOTPATH/live/$DOMAIN/privkey.pem")
 
 # grant fmserver:fmsadmin group ownership
 if [ -f "$PRIVKEYPATH" ] ; then
-    chown -R fmserver:fmsadmin "$CERTFILEPATH"
+    sudo -E chown -R fmserver:fmsadmin "$CERTFILEPATH"
 else
     err "[ERROR]: An error occurred with certificate renewal. No private key found."
     exit 1
 fi
 
 if [ -f "$CERTFILEPATH" ] ; then
-    chown -R fmserver:fmsadmin "$PRIVKEYPATH"
+    sudo -E chown -R fmserver:fmsadmin "$PRIVKEYPATH"
 else
     err "[ERROR]: An error occurred with certificate renewal. No certificate found."
     exit 1
@@ -161,7 +181,7 @@ echo "Importing Certificates:"
 echo "Certificate: $CERTFILEPATH"
 echo "Private key: $PRIVKEYPATH"
 
-fmsadmin certificate import "$CERTFILEPATH" --keyfile "$PRIVKEYPATH" -y -u $FAC_USER -p $FAC_PASS
+sudo -E fmsadmin certificate import "$CERTFILEPATH" --keyfile "$PRIVKEYPATH" -y -u $FAC_USER -p $FAC_PASS
 
 # Capture return code for running certbot command
 RETVAL=$?
@@ -178,9 +198,9 @@ if [[ $RESTART_SERVER == 1 ]] ; then
     serverIsRunning=$?
     if [ $serverIsRunning -eq 1 ] ; then
         if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            service fmshelper stop
+            sudo service fmshelper stop
         elif [[ "$OSTYPE" == "darwin"* ]]; then
-            launchctl stop com.filemaker.fms
+            sudo launchctl stop com.filemaker.fms
         fi
     fi
 
@@ -196,10 +216,12 @@ if [[ $RESTART_SERVER == 1 ]] ; then
     done
 
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        service fmshelper start
+        sudo service fmshelper start
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        launchctl start com.filemaker.fms
+        sudo launchctl start com.filemaker.fms
     fi
 fi
 
 echo "Lets Encrypt certificate renew script completed without any errors."
+
+exit 0

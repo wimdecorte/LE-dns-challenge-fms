@@ -1,3 +1,27 @@
+
+
+## NOTE: don't put quotes around the values of the variables
+
+
+# ==============================================================================
+# AWS Parameters
+# ==============================================================================
+
+# for best security:
+# make sure that these are credentials for a user that just has the special policy
+AWS_ACCESS_KEY_ID=XYZ
+AWS_SECRET_ACCESS_KEY=ABC
+# route 53 is a global service so strictly speaking the region is not needed
+AWS_REGION=us-east-1
+
+
+# ==============================================================================
+# FMS Parameters
+# ==============================================================================
+
+FAC_USERNAME=something
+FAC_PASSWORD=your_pw
+
 # Set to 1 to get user prompts for script variables.
 PROMPT=0
 
@@ -11,14 +35,15 @@ MAX_WAIT_AMOUNT=6
 # ==============================================================================
 # Certbot Parameters
 # ==============================================================================
+
 # Domain used to generate the certificate.
 # When using multiple domains, separate them with a comma.
 # ie: sample_domain1.com,sample_domain2.com
-DOMAIN="sample_domain.com"
+DOMAIN=sample_domain.com
                                           
 # Email used to generate the certificate,
 # will recieve reminders from Let's Encrypt when the certificate generated is about to expire.
-EMAIL="sample_email@email.com"
+EMAIL=sample_email@email.com
 
 # Set to 1, this will not use up a request and can be used as a dry-run to test.
 # Set to 0, the command will be run and will use up a certificate request.
