@@ -191,7 +191,9 @@ if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
 fi
 
 PRIVKEYPATH=$(sudo -E realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/privkey.pem")
+echo "Private key: $PRIVKEYPATH"
 CERTFILEPATH=$(sudo -E realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/fullchain.pem")
+echo "Certificate: $CERTFILEPATH"
 
 # grant fmserver:fmsadmin group ownership
 if [ -e "$CERTBOTPATH" ] ; then
@@ -204,14 +206,14 @@ fi
 if [ -f "$PRIVKEYPATH" ] ; then
     sudo -E chown -R fmserver:fmsadmin "$PRIVKEYPATH"
 else
-    err "[ERROR]: An error occurred with certificate generation. No private key found."
+    err "[ERROR]: An error occurred with certificate generation. No private key found at $PRIVKEYPATH"
     exit 1
 fi
 
 if [ -f "$CERTFILEPATH" ] ; then
     sudo -E chown -R fmserver:fmsadmin "$CERTFILEPATH"
 else
-    err "[ERROR]: An error occurred with certificate generation. No certificate found."
+    err "[ERROR]: An error occurred with certificate generation. No certificate found at $CERTFILEPATH"
     exit 1
 fi
 
