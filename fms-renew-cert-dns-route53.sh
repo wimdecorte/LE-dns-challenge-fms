@@ -153,27 +153,28 @@ if [[ $RETVAL != 0 ]] ; then
     exit 1
 fi
 
-# if we are testing, we don't need to import/restart
-if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
-    exit 0
-fi
 
 CERTFILEPATH=$(sudo -E realpath "$CERTBOTPATH/live/$DOMAIN/fullchain.pem")
 PRIVKEYPATH=$(sudo -E realpath "$CERTBOTPATH/live/$DOMAIN/privkey.pem")
 
 # grant fmserver:fmsadmin group ownership
-if [ -f "$PRIVKEYPATH" ] ; then
+if sudo -E test -f "$PRIVKEYPATH"; then
     sudo -E chown -R fmserver:fmsadmin "$CERTFILEPATH"
 else
     err "[ERROR]: An error occurred with certificate renewal. No private key found."
     exit 1
 fi
 
-if [ -f "$CERTFILEPATH" ] ; then
+if sudo -E test -f "$CERTFILEPATH"; then
     sudo -E chown -R fmserver:fmsadmin "$PRIVKEYPATH"
 else
     err "[ERROR]: An error occurred with certificate renewal. No certificate found."
     exit 1
+fi
+
+# if we are testing, we don't need to import/restart
+if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
+    exit 0
 fi
 
 # run fmsadmin import certificate
