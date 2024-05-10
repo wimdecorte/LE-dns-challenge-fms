@@ -1,5 +1,5 @@
 ## Acknowledgements & Background:
-----------------------------------
+
 Prior to generating a certificate, Let's Encrypt (LE) requires users to validate the domain that the certificate will be issued to.
 
 The original Claris scripts only supports Let's Encrypt validation through its HTTP-01 challenge, which will create a temporary directory and webpage to complete domain validation, and requires LE to be able to reach your FileMaker Server.
@@ -16,7 +16,7 @@ Just to name a few: cloudflare, google, ovh, digitalocean, linode, dnsimple, dns
 This setup is for Claris FileMaker Server running on Ubuntu.
 
 ## Setup
----------------------------
+
 Add a file named 01-fms-certbot.conf based on the example, you'll need to specify AWS credentials and the credentials for your FileMaker Server Admin Console, and set the options for the script
 Run the initial_setup.sh script to install certbot and the dns plugin.
 
@@ -27,19 +27,16 @@ Ideally you'll create an AWS IAM user with a strict policy to only be able to cr
 The scripts will use sudo where appropriate.  For the renewal script, if you want to schedule that as a FileMaker Server script with the default fmserver account, you will have to set the NOPASSWD option in the sudoers file (see the blog post for more details).
 
 ## To Do
------------------------------
+
 
 Email me your suggestions or add them as an issue on this repo.
 
 
 ## To note
-------------------------------
-- Root is required throughout the request scripts. This is because Certbot creates temporary directories and sets the isssued certificate and private keys' read/write permissions to root only. 
+
+- Root is required throughout the request and renewal scripts. This is because Certbot creates temporary directories and sets the isssued certificate and private keys' read/write permissions to root only. 
   The script uses root for the following:
     - Temporarily stop the ufw service to allow incoming connections into port 80 for validation
     - Permit r/w access to the fmserver:fmsadmin usergroup so that generated certificates imported by FileMaker Server.
     - Generate logs in /CStore/Certbot
 - A FileMaker Server restart is still needed to apply the certificate.
-
-
-tail -n 30 /opt/FileMaker/FileMaker\ Server/CStore/Certbot/letsencrypt.log
