@@ -8,7 +8,7 @@ These are modified versions of the Let's Encrypt (LE) scripts provided by Claris
 The original scripts use the LE http challenge, which can be tricky from a security point of view, requiring access to the FileMaker Server machine through port 80.
 
 The scripts included here use the LE dns challenge which do not require access to the FileMaker Server at all.
-See blog post <...> for more details.
+See blog post <https://www.soliantconsulting.com/blog/filemaker-lets-encrypt-ssl-certificates-dns/> for more details.
 This example uses Route53 as the DNS provider and the Certbot agent has support for many more:
 https://community.letsencrypt.org/t/dns-providers-who-easily-integrate-with-lets-encrypt-dns-validation/86438
 Just to name a few: cloudflare, google, ovh, digitalocean, linode, dnsimple, dnsmadeeasy, gehirn, luadns, nsone, rfc2136, sakuracloud...
