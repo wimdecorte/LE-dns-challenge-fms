@@ -74,7 +74,7 @@ case $DNS_PROVIDER in
             err "Please run initial_setup.sh first to configure Digital Ocean"
             exit 1
         fi
-        DNS_PLUGIN="--dns-digitalocean"
+        DNS_PLUGIN="--dns-digitalocean --dns-digitalocean-credentials /etc/certbot/digitalocean.ini"
         echo "Using Digital Ocean DNS provider"
         ;;
     *)

@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 # -e = exit if any command execution returns nonzero status except in a context that handles such: while until if && || !
 # -x = print commands as they are executed
 
@@ -73,7 +73,7 @@ case $DNS_PROVIDER in
         sudo chmod 600 /etc/certbot/digitalocean.ini
         echo "Digital Ocean DNS selected."
         echo "The token has been saved to /etc/certbot/digitalocean.ini as required by certbot for Digital Ocean."
-        echo "You may now remove the DO_TOKEN value from your 01-fms-certbot.conf file if you wish, as it is no longer needed."
+        echo "You can remove the DO_TOKEN value from your 01-fms-certbot.conf file if you wish, as it is no longer needed."
   
         ;;
     *)
