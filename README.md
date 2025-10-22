@@ -44,11 +44,14 @@ The token will be stored securely in `/etc/certbot/digitalocean.ini` with 600 pe
 
 See Digital Ocean's documentation: https://docs.digitalocean.com/reference/api/create-personal-access-token/
 
+## Scripts
+
 The scripts will use sudo where appropriate.  For the renewal script, if you want to schedule that as a FileMaker Server script with the default fmserver account, you will have to set the NOPASSWD option in the sudoers file (see the blog post for more details).
 
 ## To Do
 
-Email me your suggestions or add them as an issue on this repo.
+- Email me your suggestions or add them as an issue on this repo.
+- Consider rewriting an alternative version that combines both the initial request and renewal scripts into a single script. This script should accept `--params` options. The idea is to have one script file where all settings, domain names, keys, and other variables are set using the FileMaker external script schedule parameters. This approach would ensure that filemaker server settings backups and restores contain all the required information to continue cerbot operating without any user intervention.
 
 
 ## To note

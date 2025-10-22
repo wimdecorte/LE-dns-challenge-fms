@@ -45,12 +45,12 @@ case $DNS_PROVIDER in
         fi
         
         echo "Installing certbot and AWS Route53 plugin..."
-        sudo snap install --classic certbot
-        sudo ln -s /snap/bin/certbot /usr/bin/certbot
+        sudo snap install --classic certbot 2>/dev/null || echo "Certbot already installed"
+        sudo ln -sf /snap/bin/certbot /usr/bin/certbot
         sudo snap set certbot trust-plugin-with-root=ok
-        sudo snap install certbot-dns-route53
-        sudo snap connect certbot:plugin certbot-dns-route53
-        echo "AWS Route53 selected. AWS credentials validated."
+        sudo snap install certbot-dns-route53 2>/dev/null || echo "Route53 plugin already installed"
+        sudo snap connect certbot:plugin certbot-dns-route53 2>/dev/null || true
+        echo "AWS Route53 configured. AWS credentials validated."
         ;;
     digitalocean)
         # Check Digital Ocean token is set
@@ -61,18 +61,18 @@ case $DNS_PROVIDER in
         fi
         
         echo "Installing certbot and Digital Ocean DNS plugin..."
-        sudo snap install --classic certbot
-        sudo ln -s /snap/bin/certbot /usr/bin/certbot
+        sudo snap install --classic certbot 2>/dev/null || echo "Certbot already installed"
+        sudo ln -sf /snap/bin/certbot /usr/bin/certbot
         sudo snap set certbot trust-plugin-with-root=ok
-        sudo snap install certbot-dns-digitalocean
-        sudo snap connect certbot:plugin certbot-dns-digitalocean
+        sudo snap install certbot-dns-digitalocean 2>/dev/null || echo "DigitalOcean plugin already installed"
+        sudo snap connect certbot:plugin certbot-dns-digitalocean 2>/dev/null || true
         
-        # Create the digitalocean.ini file with the token from config
+        # Create/update the digitalocean.ini file with the token from config
         sudo mkdir -p /etc/certbot
         echo "dns_digitalocean_token = $DO_TOKEN" | sudo tee /etc/certbot/digitalocean.ini > /dev/null
         sudo chmod 600 /etc/certbot/digitalocean.ini
-        echo "Digital Ocean DNS selected."
-        echo "The token has been saved to /etc/certbot/digitalocean.ini as required by certbot for Digital Ocean."
+        echo "Digital Ocean DNS configured."
+        echo "The token has been saved/updated at /etc/certbot/digitalocean.ini"
         echo "You can remove the DO_TOKEN value from your 01-fms-certbot.conf file if you wish, as it is no longer needed."
   
         ;;
