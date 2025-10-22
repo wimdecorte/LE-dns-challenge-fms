@@ -4,15 +4,42 @@
 
 
 # ==============================================================================
-# AWS Parameters
+# DNS Provider Parameters
+# ==============================================================================
+# Choose your DNS provider: "aws" or "digitalocean"
+# Default: aws
+DNS_PROVIDER=aws
+
+# NOTE: The DNS_PROVIDER setting determines which DNS service to use.
+# If set to "aws", AWS credentials must be configured below.
+# If set to "digitalocean", DO_TOKEN must be configured below.
+
+# ==============================================================================
+# AWS Route53 Parameters
 # ==============================================================================
 
 # for best security:
 # make sure that these are credentials for a user that just has the special policy
-AWS_ACCESS_KEY_ID=XYZ
-AWS_SECRET_ACCESS_KEY=ABC
+# Leave empty to use Digital Ocean DNS instead
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 # route 53 is a global service so strictly speaking the region is not needed
 AWS_REGION=us-east-1
+
+# ==============================================================================
+# Digital Ocean DNS Parameters
+# ==============================================================================
+
+# Digital Ocean API Token for DNS management
+# Create a token at: https://cloud.digitalocean.com/account/api/tokens
+# Required permissions: Read and Write
+# Token will be stored in: /etc/certbot/digitalocean.ini
+# Leave empty to use AWS Route53 instead
+# 
+# Digital Ocean Token Permissions Required:
+# - DNS: Read and Write (to create/delete TXT records for domain validation)
+# - No other permissions needed for DNS-only operations
+DO_TOKEN=
 
 
 # ==============================================================================

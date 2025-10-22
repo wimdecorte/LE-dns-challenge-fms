@@ -9,20 +9,25 @@ The original scripts use the LE http challenge, which can be tricky from a secur
 
 The scripts included here use the LE dns challenge which do not require access to the FileMaker Server at all.
 See blog post <https://www.soliantconsulting.com/blog/filemaker-lets-encrypt-ssl-certificates-dns/> for more details.
-This example uses Route53 as the DNS provider and the Certbot agent has support for many more:
+This example supports both Route53 and Digital Ocean as DNS providers. The Certbot agent has support for many more:
 https://community.letsencrypt.org/t/dns-providers-who-easily-integrate-with-lets-encrypt-dns-validation/86438
-Just to name a few: cloudflare, google, ovh, digitalocean, linode, dnsimple, dnsmadeeasy, gehirn, luadns, nsone, rfc2136, sakuracloud...
+Just to name a few: cloudflare, google, ovh, linode, dnsimple, dnsmadeeasy, gehirn, luadns, nsone, rfc2136, sakuracloud...
 
 This setup is for Claris FileMaker Server running on Ubuntu.
 
 ## Setup
 
-Add a file named 01-fms-certbot.conf based on the example, you'll need to specify AWS credentials and the credentials for your FileMaker Server Admin Console, and set the options for the script
-Run the initial_setup.sh script to install certbot and the dns plugin.
+Add a file named 01-fms-certbot.conf based on the example, you'll need to specify your DNS provider (AWS or Digital Ocean), credentials, and the credentials for your FileMaker Server Admin Console, and set the options for the script
+Run the initial_setup.sh script to install certbot and the appropriate dns plugin.
 
-Ideally you'll create an AWS IAM user with a strict policy to only be able to create the required TXT DNS record and not allowed to modify any other DNS records.  A sample policy is included.  In that policy change:
+For AWS Route53:
+Ideally, you'll create an AWS IAM user with a strict policy to only be able to create the required TXT DNS record and not be allowed to modify any other DNS records. A sample policy is included. In that policy, change:
 - line 21 by adding your hosted zone id
-- line 26 by adding  your domain name
+- line 26 by adding your domain name
+
+For DigitalOcean:
+Create a DigitalOcean API token with “Write” access to your account’s DNS. This token will be stored in `/etc/certbot/digitalocean.ini` for Certbot to use. See the DigitalOcean documentation for steps on creating the token: https://docs.digitalocean.com/reference/api/create-personal-access-token/
+Make sure the API token has only domain-related permissions and is kept secure.
 
 The scripts will use sudo where appropriate.  For the renewal script, if you want to schedule that as a FileMaker Server script with the default fmserver account, you will have to set the NOPASSWD option in the sudoers file (see the blog post for more details).
 

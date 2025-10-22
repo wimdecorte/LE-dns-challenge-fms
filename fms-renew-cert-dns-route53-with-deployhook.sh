@@ -52,6 +52,40 @@ err()
     echo "$*" >&2
 }
 
+# Check DNS provider configuration
+if [[ -z "${DNS_PROVIDER}" ]]; then
+    err "Error: DNS_PROVIDER not configured in 01-fms-certbot.conf"
+    err "Please set DNS_PROVIDER to either 'aws' or 'digitalocean'"
+    exit 1
+fi
+
+# Validate DNS provider credentials
+case $DNS_PROVIDER in
+    aws)
+        if [[ -z "${AWS_ACCESS_KEY_ID}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${AWS_REGION}" ]]; then
+            err "Error: AWS credentials not configured in 01-fms-certbot.conf"
+            err "Please set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_REGION"
+            exit 1
+        fi
+        DNS_PLUGIN="--dns-route53"
+        echo "Using AWS Route53 DNS provider"
+        ;;
+    digitalocean)
+        if [[ ! -f "/etc/certbot/digitalocean.ini" ]]; then
+            err "Error: Digital Ocean token file not found at /etc/certbot/digitalocean.ini"
+            err "Please run initial_setup.sh first to configure Digital Ocean"
+            exit 1
+        fi
+        DNS_PLUGIN="--dns-digitalocean"
+        echo "Using Digital Ocean DNS provider"
+        ;;
+    *)
+        err "Error: Invalid DNS_PROVIDER setting: $DNS_PROVIDER"
+        err "Please set DNS_PROVIDER to either 'aws' or 'digitalocean' in 01-fms-certbot.conf"
+        exit 1
+        ;;
+esac
+
 # Test to see if Certbot is installed
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Ubuntu
@@ -133,13 +167,13 @@ echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 # run the certbot command
 if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
     echo "Generating test certificate request." 
-    sudo -E certbot renew --dns-route53 --dry-run --cert-name $DOMAIN  --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
+    sudo -E certbot renew $DNS_PLUGIN --dry-run --cert-name $DOMAIN  --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH"
 else
     echo "Generating certificate request." 
     if [[ $FORCE_RENEW -eq 1 ]] ; then
-        sudo -E certbot renew --dns-route53 --cert-name $DOMAIN --force-renew --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" --deploy-hook "./fms-import-cert.sh"
+        sudo -E certbot renew $DNS_PLUGIN --cert-name $DOMAIN --force-renew --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" --deploy-hook "./fms-import-cert.sh"
     else
-        sudo -E certbot renew --dns-route53 --cert-name $DOMAIN --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" --deploy-hook "./fms-import-cert.sh"
+        sudo -E certbot renew $DNS_PLUGIN --cert-name $DOMAIN --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" --deploy-hook "./fms-import-cert.sh"
     fi
 fi
 
