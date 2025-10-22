@@ -11,12 +11,14 @@ The scripts included here use the LE dns challenge which do not require access t
 See blog post <https://www.soliantconsulting.com/blog/filemaker-lets-encrypt-ssl-certificates-dns/> for more details.
 This example supports both Route53 and Digital Ocean as DNS providers. The Certbot agent has support for many more:
 https://community.letsencrypt.org/t/dns-providers-who-easily-integrate-with-lets-encrypt-dns-validation/86438
+
 Just to name a few: cloudflare, google, ovh, linode, dnsimple, dnsmadeeasy, gehirn, luadns, nsone, rfc2136, sakuracloud...
 
 This setup is for Claris FileMaker Server running on Ubuntu.
 
 ## Setup
 
+### For AWS:
 Add a file named 01-fms-certbot.conf based on the example, you'll need to specify your DNS provider (AWS or Digital Ocean), credentials, and the credentials for your FileMaker Server Admin Console, and set the options for the script
 Run the initial_setup.sh script to install certbot and the appropriate dns plugin.
 
@@ -25,14 +27,26 @@ Ideally, you'll create an AWS IAM user with a strict policy to only be able to c
 - line 21 by adding your hosted zone id
 - line 26 by adding your domain name
 
-For DigitalOcean:
-Create a DigitalOcean API token with “Write” access to your account’s DNS. This token will be stored in `/etc/certbot/digitalocean.ini` for Certbot to use. See the DigitalOcean documentation for steps on creating the token: https://docs.digitalocean.com/reference/api/create-personal-access-token/
-Make sure the API token has only domain-related permissions and is kept secure.
+### For Digital Ocean:
+Create a Digital Ocean Token with the following permissions:
+
+Required scopes:
+- `domain:read` - Read domain and DNS record information
+- `domain:create` - Create DNS records (for ACME challenge)
+- `domain:delete` - Delete DNS records (cleanup after validation)
+
+**Do NOT select:**
+- Droplet permissions
+- Load balancer permissions
+- Any other non-domain permissions
+
+The token will be stored securely in `/etc/certbot/digitalocean.ini` with 600 permissions (readable only by root).
+
+See Digital Ocean's documentation: https://docs.digitalocean.com/reference/api/create-personal-access-token/
 
 The scripts will use sudo where appropriate.  For the renewal script, if you want to schedule that as a FileMaker Server script with the default fmserver account, you will have to set the NOPASSWD option in the sudoers file (see the blog post for more details).
 
 ## To Do
-
 
 Email me your suggestions or add them as an issue on this repo.
 
