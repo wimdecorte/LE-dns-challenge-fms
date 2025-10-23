@@ -50,6 +50,40 @@ err()
     echo "$*" >&2
 }
 
+# Check DNS provider configuration
+if [[ -z "${DNS_PROVIDER}" ]]; then
+    err "Error: DNS_PROVIDER not configured in 01-fms-certbot.conf"
+    err "Please set DNS_PROVIDER to either 'aws' or 'digitalocean'"
+    exit 1
+fi
+
+# Validate DNS provider credentials
+case $DNS_PROVIDER in
+    aws)
+        if [[ -z "${AWS_ACCESS_KEY_ID}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${AWS_REGION}" ]]; then
+            err "Error: AWS credentials not configured in 01-fms-certbot.conf"
+            err "Please set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_REGION"
+            exit 1
+        fi
+        DNS_PLUGIN="--dns-route53"
+        echo "Using AWS Route53 DNS provider"
+        ;;
+    digitalocean)
+        if [[ ! -f "/etc/certbot/digitalocean.ini" ]]; then
+            err "Error: Digital Ocean token file not found at /etc/certbot/digitalocean.ini"
+            err "Please run initial_setup.sh first to configure Digital Ocean"
+            exit 1
+        fi
+        DNS_PLUGIN="--dns-digitalocean --dns-digitalocean-credentials /etc/certbot/digitalocean.ini"
+        echo "Using Digital Ocean DNS provider"
+        ;;
+    *)
+        err "Error: Invalid DNS_PROVIDER setting: $DNS_PROVIDER"
+        err "Please set DNS_PROVIDER to either 'aws' or 'digitalocean' in 01-fms-certbot.conf"
+        exit 1
+        ;;
+esac
+
 # Test to see if Certbot is installed
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Ubuntu
@@ -174,8 +208,8 @@ else
     echo "Generating certificate request." 
 fi
 
-# Run the certbot certificate generation command
-sudo -E certbot certonly --dns-route53 $TEST_CERT_PARAM $DOMAINLIST --agree-tos --non-interactive -m $EMAIL --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" $EXPAND_PARAM
+# Run the certbot certificate generation command with the appropriate DNS plugin
+sudo -E certbot certonly $DNS_PLUGIN $TEST_CERT_PARAM $DOMAINLIST --agree-tos --non-interactive -m $EMAIL --config-dir "$CERTBOTPATH" --work-dir "$CERTBOTPATH" --logs-dir "$CERTBOTPATH" $EXPAND_PARAM
 
 # Capture return code for running certbot command
 RETVAL=$?
@@ -183,6 +217,12 @@ RETVAL=$?
 if [ $RETVAL != 0 ] ; then
     err "[ERROR]: Certbot returned with a nonzero failure code. Check $CERTBOTPATH/letsencrypt.log for more information."
     exit 1
+fi
+
+# if we are testing, we don't need to import/restart
+if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
+    echo "Test certificate request completed successfully."
+    exit 0
 fi
 
 PRIVKEYPATH=$(sudo -E realpath "$CERTBOTPATH/live/$FIRST_DOMAIN/privkey.pem")
@@ -209,11 +249,6 @@ if sudo -E test -f "$CERTFILEPATH"; then
     sudo -E chown -R fmserver:fmsadmin "$CERTFILEPATH"
 else
     err "[ERROR]: An error occurred with certificate generation. No certificate found at $CERTFILEPATH"
-    exit 1
-fi
-
-# if we are testing, we don't need to import/restart
-if [[ $TEST_CERTIFICATE -eq 1 ]] ; then
     exit 1
 fi
 
